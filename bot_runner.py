@@ -41,6 +41,28 @@ daily_helpers = {}
 
 # ----------------- API ----------------- #
 
+from pydantic import BaseModel
+
+# For /twilio_start_bot
+class TwilioRequest(BaseModel):
+    CallSid: str
+    # Add other potential Twilio form fields if needed
+    
+# For /daily_start_bot
+class DailyBotRequest(BaseModel):
+    callId: str
+    callDomain: str
+    dialoutNumber: str | None = None
+    detectVoicemail: bool = False
+    test: bool | None = None
+
+# For /daily_gemini_start_bot (same structure as DailyBotRequest)
+class DailyGeminiBotRequest(BaseModel):
+    callId: str
+    callDomain: str
+    dialoutNumber: str | None = None
+    detectVoicemail: bool = False
+    test: bool | None = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -135,7 +157,7 @@ async def _create_daily_room(
 
 
 @app.post("/twilio_start_bot", response_class=PlainTextResponse)
-async def twilio_start_bot(request: Request):
+async def twilio_start_bot(request: TwilioRequest):
     print(f"POST /twilio_voice_bot")
 
     # twilio_start_bot is invoked directly by Twilio (as a web hook).
@@ -177,7 +199,7 @@ async def twilio_start_bot(request: Request):
 
 
 @app.post("/daily_start_bot")
-async def daily_start_bot(request: Request) -> JSONResponse:
+async def daily_start_bot(request: DailyBotRequest) -> JSONResponse:
     # The /daily_start_bot is invoked when a call is received on Daily's SIP URI
     # daily_start_bot will create the room, put the call on hold until
     # the bot and sip worker are ready. Daily will automatically
@@ -209,7 +231,7 @@ async def daily_start_bot(request: Request) -> JSONResponse:
 
 
 @app.post("/daily_gemini_start_bot")
-async def daily_gemini_start_bot(request: Request) -> JSONResponse:
+async def daily_gemini_start_bot(request: DailyGeminiBotRequest) -> JSONResponse:
     # The /daily_start_bot is invoked when a call is received on Daily's SIP URI
     # daily_start_bot will create the room, put the call on hold until
     # the bot and sip worker are ready. Daily will automatically
